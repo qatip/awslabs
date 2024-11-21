@@ -22,7 +22,7 @@ resource "docker_container" "web_server" {
   name  = "web_server"
   ports {
     internal = 80
-    #external = 8081
-    external = 88
+    external = 8081
+    #external = 88
   }
 }
