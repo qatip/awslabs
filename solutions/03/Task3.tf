@@ -158,32 +158,3 @@ resource "aws_security_group" "external_sg" {
   }
 }
 
-resource "aws_instance" "private_vm" {
-  ami                         = "ami-06e85d4c3149db26a"
-  instance_type               = "t3.micro"
-  key_name                    = "Oregon_lab_keypair"
-  availability_zone           = "us-west-2a"
-  subnet_id                   = aws_subnet.private_subnet.id
-  associate_public_ip_address = false
-  vpc_security_group_ids      = ["${aws_security_group.internal_sg.id}"]
-
-  tags = {
-    Name = "Private-VM"
-  }
-  depends_on = [aws_subnet.private_subnet, aws_security_group.internal_sg]
-}
-
-resource "aws_instance" "public_vm" {
-  ami                         = "ami-06e85d4c3149db26a"
-  instance_type               = "t3.micro"
-  key_name                    = "Oregon_lab_keypair"
-  availability_zone           = "us-west-2a"
-  subnet_id                   = aws_subnet.public_subnet.id
-  associate_public_ip_address = true
-  vpc_security_group_ids      = ["${aws_security_group.external_sg.id}"]
-
-  tags = {
-    Name = "Public-VM"
-  }
-  depends_on = [aws_subnet.public_subnet, aws_security_group.external_sg]
-}
