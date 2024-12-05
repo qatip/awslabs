@@ -1,3 +1,4 @@
+# make runable using chmod +x whichami.sh
 # Usage: ./whichami.sh <region>
 
 # See if a region is provided
