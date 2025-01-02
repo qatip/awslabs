@@ -16,7 +16,7 @@ output "instance_details" {
   description = "Details of the created instances"
   value = {
     workspace = terraform.workspace
-    #region    = var.inst_region
+    #region    = var.region
     vm_names  = [for instance in aws_instance.example : instance.tags["Name"]]
     size      = aws_instance.example[0].instance_type
     ami       = aws_instance.example[0].ami

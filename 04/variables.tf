@@ -1,13 +1,13 @@
-#variable "inst_region" {
+#variable "region" {
 #  description = "AWS region"
 #  type        = string
-#  default     = "us-west-1"
+#  default     = "us-west-2"
 #}
 
 #variable "inst_count" {
 #  description = "Number of instances"
 #  type        = number
-#  default     = 2
+#  default     = 1
 #}
 
 #variable "inst_size" {
