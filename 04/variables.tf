@@ -1,4 +1,4 @@
-#variable "region" {
+#variable "inst_region" {
 #  description = "AWS region"
 #  type        = string
 #  default     = "us-west-1"
@@ -10,19 +10,19 @@
 #  default     = 2
 #}
 
-#variable "size" {
+#variable "inst_size" {
 #  description = "Instance size"
 #  type        = string
 #  default     = "t2.micro"
 #}
 
-#variable "vm_ami" {
+#variable "inst_ami" {
 #  description = "Instance AMI"
 #  type        = string
 #  default     = "ami-0d08c3b92d0f4250a"
 #}
 
-#variable "ami_map" {
+#variable "inst_ami_map" {
 #  description = "Mapping of region to AMI ID"
 #  type        = map(string)
 #}

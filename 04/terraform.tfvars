@@ -5,4 +5,4 @@
 #  "us-east-1" = "ami-04552bb4f4dd38925"
 #}
 
-#inst_count = 2
+#inst_count = 1

@@ -1,3 +1,3 @@
-#region = "us-west-1"
-#inst_count  = 4
-#size   = "t3.small"
+inst_region = "us-west-1"
+inst_count  = 4
+inst_size   = "t3.small"
