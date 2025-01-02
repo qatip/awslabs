@@ -1,23 +1,28 @@
-variable "deployment_region" {
-  description = "Region of deployment"
-  type        = string
-  default     = "us-west-1"
-}
+#variable "region" {
+#  description = "AWS region"
+#  type        = string
+#  default     = "us-west-1"
+#}
 
-variable "region_az" {
-  description = "Availability Zone"
-  type        = string
-  default     = "us-west-1a"
-}
+#variable "inst_count" {
+#  description = "Number of instances"
+#  type        = number
+#  default     = 2
+#}
 
-variable "instance_ami" {
-  description = "EC2 ami"
-  type        = string
-  default     = "ami-0036b4598ccd42565"
-}
+#variable "size" {
+#  description = "Instance size"
+#  type        = string
+#  default     = "t2.micro"
+#}
 
-variable "ec2_instance_size" {
-  description = "EC2 size"
-  type        = string
-  default     = "t2.micro"
-}
+#variable "vm_ami" {
+#  description = "Instance AMI"
+#  type        = string
+#  default     = "ami-0d08c3b92d0f4250a"
+#}
+
+#variable "ami_map" {
+#  description = "Mapping of region to AMI ID"
+#  type        = map(string)
+#}
