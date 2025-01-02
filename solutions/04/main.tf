@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-west-2"
+  region = "us-east-1"
 }
 
 resource "aws_instance" "example" {
@@ -16,7 +16,7 @@ output "instance_details" {
   description = "Details of the created instances"
   value = {
     workspace = terraform.workspace
-    region    = var.region
+    #region    = var.inst_region
     vm_names  = [for instance in aws_instance.example : instance.tags["Name"]]
     size      = aws_instance.example[0].instance_type
     ami       = aws_instance.example[0].ami
