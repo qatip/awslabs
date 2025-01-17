@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "docker" {
-  # Configuration options
+  host = "unix:///var/run/docker.sock"
 }
 
 # Pulls the image
@@ -22,7 +22,7 @@ resource "docker_container" "web_server" {
   name  = "web_server"
   ports {
     internal = 80
-    external = 8081
-    #external = 88
+    external = 88
+#    external = 8088
   }
 }
