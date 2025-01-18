@@ -9,7 +9,7 @@ IGW_NAME="Lab6InternetGateway"
 KEY_NAME="Jenkins"
 INSTANCE_NAME="JenkinsServer"
 AMI_ID="ami-0d08c3b92d0f4250a" # Replace with your desired AMI ID (Ubuntu 22.04 in us-west-2)
-INSTANCE_TYPE="t2.micro"
+INSTANCE_TYPE="t3.small"
 REGION="us-west-2"
 
 # Step 1: Create VPC
@@ -75,6 +75,10 @@ sudo apt install -y jenkins
 # Start and enable Jenkins
 sudo systemctl start jenkins
 sudo systemctl enable jenkins
+
+# Grant Jenkins user specific sudo privileges
+echo "jenkins ALL=(ALL) NOPASSWD: /usr/bin/mv, /usr/bin/unzip" | sudo tee /etc/sudoers.d/jenkins
+sudo chmod 440 /etc/sudoers.d/jenkins
 
 # Save Jenkins initial admin password
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword > /home/ubuntu/jenkins_admin_password.txt
