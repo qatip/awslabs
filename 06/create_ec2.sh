@@ -62,19 +62,33 @@ echo "Completed: Key Pair $KEY_NAME created and saved as ${KEY_NAME}.pem"
 
 # Step 7: Launch EC2 Instance with User Data
 echo "Starting: Launching EC2 Instance..."
+JENKINS_VERSION="2.479.3"  # Change this to your desired Jenkins version
+
 USER_DATA=$(cat <<-END
 #!/bin/bash
+set -e  # Exit on error
+
+# Update and install dependencies
 sudo apt update -y && sudo apt upgrade -y
-sudo apt install -y openjdk-17-jdk unzip curl
+sudo apt install -y openjdk-17-jdk unzip curl gnupg lsb-release
+
+# Add Jenkins repository and install specific version
 curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
 sudo apt update -y
-sudo apt install -y jenkins
-sudo systemctl start jenkins
-sudo systemctl enable jenkins
+sudo apt install -y jenkins=$JENKINS_VERSION
+sudo apt-mark hold jenkins  # Prevent automatic updates
+
+# Start and enable Jenkins
+sudo systemctl enable --now jenkins
+sudo systemctl restart jenkins
+
+# Configure sudoers for Jenkins
 sudo bash -c 'echo "jenkins ALL=(ALL) NOPASSWD: /usr/bin/mv, /usr/bin/unzip" > /etc/sudoers.d/jenkins'
 sudo chmod 440 /etc/sudoers.d/jenkins
-sudo cat /var/lib/jenkins/secrets/initialAdminPassword > /home/ubuntu/jenkins_admin_password.txt
+
+# Save Jenkins initial admin password
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword > /home/ubuntu/jenkins_admin_password.txt || true
 END
 )
 INSTANCE_ID=$(aws ec2 run-instances \
@@ -97,9 +111,17 @@ echo "Instance is accessible at IP: http://$INSTANCE_IP:8080"
 
 # Wait for Jenkins initialization
 echo "Waiting 5 minutes for Jenkins to initialize..."
-sleep 300
+sleep 60
+echo "Waiting 4 minutes for Jenkins to initialize..."
+sleep 60
+echo "Waiting 3 minutes for Jenkins to initialize..."
+sleep 60
+echo "Waiting 2 minutes for Jenkins to initialize..."
+sleep 60
+echo "Waiting 1 minutes for Jenkins to initialize..."
+sleep 60
 
-# Retrieve the Jenkins admin password
+ Retrieve the Jenkins admin password
 echo "Retrieving the Jenkins initial admin password..."
 PASSWORD=$(ssh -o StrictHostKeyChecking=no -i ${KEY_NAME}.pem ubuntu@$INSTANCE_IP "cat /home/ubuntu/jenkins_admin_password.txt" 2>/dev/null)
 
