@@ -8,9 +8,9 @@ ROUTE_TABLE_NAME="Lab6RouteTable"
 IGW_NAME="Lab6InternetGateway"
 KEY_NAME="Jenkins"
 INSTANCE_NAME="JenkinsServer"
-AMI_ID="ami-0d08c3b92d0f4250a" # Replace with your desired AMI ID (Ubuntu 22.04 in us-west-2)
+AMI_ID="ami-020cba7c55df1f615" # Replace with your desired AMI ID (Ubuntu 22.04 in us-east-1)
 INSTANCE_TYPE="t3.small"
-REGION="us-west-2"
+REGION="us-east-1"
 
 # Function to handle errors
 handle_error() {
