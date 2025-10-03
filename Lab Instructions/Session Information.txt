@@ -1,0 +1,15 @@
+Session Information
+AWS Console URL: https://aws.amazon.com/console
+-----------------------------------------------------------------------------------------
+Username: student
+Password:   
+Access Key ID:    
+Secret Access Key:   
+-------------------------------------------------------------------------------------------
+Jenkins-state-bucket :   
+Github username :  
+Github password :  
+Repo-URL: 
+IDE IP : 
+Jenkins Public IP :  
+--------------------------------------------------------------------------------------------
