@@ -6,7 +6,7 @@ SUBNET_NAME="Lab6Subnet"
 SECURITY_GROUP_NAME="Lab6SecurityGroup"
 ROUTE_TABLE_NAME="Lab6RouteTable"
 IGW_NAME="Lab6InternetGateway"
-KEY_NAME="Jenkins"
+KEY_NAME="Jenkins" # Change if teardown/recreate attempted
 INSTANCE_NAME="JenkinsServer"
 AMI_ID="ami-020cba7c55df1f615" # Replace with your desired AMI ID (Ubuntu 22.04 in us-east-1)
 INSTANCE_TYPE="t3.small"
@@ -26,7 +26,7 @@ echo "Completed: VPC $VPC_NAME created with ID: $VPC_ID"
 
 # Step 2: Create Subnet
 echo "Starting: Creating Subnet..."
-SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.1.0/24 --availability-zone ${REGION}a --query "Subnet.SubnetId" --output text 2>/dev/null) || handle_error "Subnet creation"
+SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.1.0/24 --region ${REGION} --query "Subnet.SubnetId" --output text 2>/dev/null) || handle_error "Subnet creation"
 aws ec2 create-tags --resources $SUBNET_ID --tags Key=Name,Value=$SUBNET_NAME --region $REGION >/dev/null 2>&1
 aws ec2 modify-subnet-attribute --subnet-id $SUBNET_ID --map-public-ip-on-launch >/dev/null 2>&1
 echo "Completed: Subnet $SUBNET_NAME created with ID: $SUBNET_ID"
@@ -48,7 +48,7 @@ echo "Completed: Route Table $ROUTE_TABLE_NAME created and associated with Subne
 
 # Step 5: Create Security Group
 echo "Starting: Creating Security Group..."
-SECURITY_GROUP_ID=$(aws ec2 create-security-group --group-name $SECURITY_GROUP_NAME --description "Allow SSH and HTTP traffic" --vpc-id $VPC_ID --query "GroupId" --output text 2>/dev/null) || handle_error "Security Group creation"
+SECURITY_GROUP_ID=$(aws ec2 create-security-group --group-name $SECURITY_GROUP_NAME --region ${REGION} --description "Allow SSH and HTTP traffic" --vpc-id $VPC_ID --query "GroupId" --output text 2>/dev/null) || handle_error "Security Group creation"
 aws ec2 authorize-security-group-ingress --group-id $SECURITY_GROUP_ID --protocol tcp --port 22 --cidr 0.0.0.0/0 --region $REGION >/dev/null 2>&1
 aws ec2 authorize-security-group-ingress --group-id $SECURITY_GROUP_ID --protocol tcp --port 80 --cidr 0.0.0.0/0 --region $REGION >/dev/null 2>&1
 aws ec2 authorize-security-group-ingress --group-id $SECURITY_GROUP_ID --protocol tcp --port 8080 --cidr 0.0.0.0/0 --region $REGION >/dev/null 2>&1
@@ -56,13 +56,13 @@ echo "Completed: Security Group $SECURITY_GROUP_NAME created with ID: $SECURITY_
 
 # Step 6: Create Key Pair
 echo "Starting: Creating Key Pair..."
-aws ec2 create-key-pair --key-name $KEY_NAME --query "KeyMaterial" --output text > ${KEY_NAME}.pem 2>/dev/null || handle_error "Key Pair creation"
+aws ec2 create-key-pair --region ${REGION} --key-name $KEY_NAME --query "KeyMaterial" --output text > ${KEY_NAME}.pem 2>/dev/null || handle_error "Key Pair creation"
 chmod 400 ${KEY_NAME}.pem
 echo "Completed: Key Pair $KEY_NAME created and saved as ${KEY_NAME}.pem"
 
 # Step 7: Launch EC2 Instance with User Data
 echo "Starting: Launching EC2 Instance..."
-JENKINS_VERSION="2.479.3"  # Change this to your desired Jenkins version
+JENKINS_VERSION="2.516.3"  # Change this to your desired Jenkins version
 
 USER_DATA=$(cat <<-END
 #!/bin/bash
@@ -92,6 +92,7 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword > /home/ubuntu/jenkins_ad
 END
 )
 INSTANCE_ID=$(aws ec2 run-instances \
+    --region ${REGION} \
     --image-id $AMI_ID \
     --count 1 \
     --instance-type $INSTANCE_TYPE \
@@ -121,7 +122,7 @@ sleep 60
 echo "Waiting 1 minutes for Jenkins to initialize..."
 sleep 60
 
- Retrieve the Jenkins admin password
+# Retrieve the Jenkins admin password
 echo "Retrieving the Jenkins initial admin password..."
 PASSWORD=$(ssh -o StrictHostKeyChecking=no -i ${KEY_NAME}.pem ubuntu@$INSTANCE_IP "cat /home/ubuntu/jenkins_admin_password.txt" 2>/dev/null)
 
