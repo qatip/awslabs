@@ -9,7 +9,11 @@ terraform {
 
 provider "aws" {
   region = "us-west-2"
+    ignore_tags { 
+    key_prefixes = ["ca-"]
+  }
 }
+
 
 resource "aws_vpc" "test_vpc" {
   cidr_block = "10.1.0.0/16"

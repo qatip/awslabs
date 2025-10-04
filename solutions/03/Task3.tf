@@ -9,6 +9,9 @@ terraform {
 
 provider "aws" {
   region = "us-west-2"
+    ignore_tags { 
+    key_prefixes = ["ca-"]
+  }
 }
 
 resource "aws_vpc" "test_vpc" {
