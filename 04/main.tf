@@ -13,6 +13,7 @@ provider "aws" {
     key_prefixes = ["ca-"]
   }
 }
+
 resource "aws_instance" "example" {
   ami           = "ami-0d08c3b92d0f4250a"
   instance_type = "t2.micro"
@@ -22,6 +23,7 @@ resource "aws_instance" "example" {
     Name = "terraform-demo-${terraform.workspace}-${format("%02d", count.index + 1)}"
   }
 }
+
 
 output "instance_details" {
   description = "Details of the created instances"
