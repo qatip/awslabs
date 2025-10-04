@@ -11,7 +11,11 @@ terraform {
 
 provider "aws" {
   region = "us-west-2"
+    ignore_tags { 
+    key_prefixes = ["ca-"]
+  }
 }
+
 
 module "vpc" {
   source = "./network"

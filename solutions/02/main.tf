@@ -8,7 +8,10 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-west-2" 
+  region = "us-west-2"
+    ignore_tags { 
+    key_prefixes = ["ca-"]
+  }
 }
 
 data "aws_ami" "ubuntu" {
