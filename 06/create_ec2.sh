@@ -62,20 +62,19 @@ echo "Completed: Key Pair $KEY_NAME created and saved as ${KEY_NAME}.pem"
 
 # Step 7: Launch EC2 Instance with User Data
 echo "Starting: Launching EC2 Instance..."
-JENKINS_VERSION="2.516.3"  # Change this to your desired Jenkins version
+JENKINS_VERSION="2.541.1"  # Change this to your desired Jenkins version
 
 USER_DATA=$(cat <<-END
 #!/bin/bash
 set -e  # Exit on error
 
-# Update and install dependencies
-sudo apt update -y && sudo apt upgrade -y
-sudo apt install -y openjdk-17-jdk unzip curl gnupg lsb-release
-
-# Add Jenkins repository and install specific version
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
-echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
-sudo apt update -y
+sudo apt-get update -y
+sudo apt-get upgrade -y
+sudo apt-get install -y fontconfig openjdk-21-jre curl gnupg lsb-release unzip
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key | sudo tee /etc/apt/keyrings/jenkins-keyring.asc > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt-get update -y
 sudo apt install -y jenkins=$JENKINS_VERSION
 sudo apt-mark hold jenkins  # Prevent automatic updates
 
