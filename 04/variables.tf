@@ -1,8 +1,8 @@
-#variable "region" {
-#  description = "AWS region"
-#  type        = string
-#  default     = "us-west-2"
-#}
+variable "region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-west-2"
+}
 
 #variable "inst_count" {
 #  description = "Number of instances"
@@ -20,9 +20,4 @@
 #  description = "Instance AMI"
 #  type        = string
 #  default     = "ami-0d08c3b92d0f4250a"
-#}
-
-#variable "inst_ami_map" {
-#  description = "Mapping of region to AMI ID"
-#  type        = map(string)
 #}
