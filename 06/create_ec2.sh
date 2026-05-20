@@ -361,7 +361,7 @@ apt-get install -y \
     openjdk-21-jre \
     curl \
     gnupg \
-    unzip
+    unzip \
     git
 
 mkdir -p /etc/apt/keyrings
