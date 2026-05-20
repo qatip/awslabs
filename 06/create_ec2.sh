@@ -15,8 +15,6 @@ IGW_NAME="Lab6InternetGateway"
 KEY_NAME="Jenkins"
 INSTANCE_NAME="JenkinsServer"
 
-AMI_ID="ami-020cba7c55df1f615"
-
 INSTANCE_TYPE="t3.small"
 REGION="us-east-1"
 
@@ -32,6 +30,32 @@ JENKINS_VERSION="2.541.1"
 resource_exists() {
     [[ "$1" != "None" && -n "$1" ]]
 }
+
+# =========================================================
+# Retrieve Latest Ubuntu 22.04 AMI
+# =========================================================
+echo ""
+echo "========================================================="
+echo "Retrieving Latest Ubuntu 22.04 AMI..."
+echo "========================================================="
+
+AMI_ID=$(aws ec2 describe-images \
+    --owners 099720109477 \
+    --filters \
+        "Name=name,Values=*22.04-amd64-server-*" \
+        "Name=architecture,Values=x86_64" \
+        "Name=virtualization-type,Values=hvm" \
+        "Name=root-device-type,Values=ebs" \
+    --query "Images | sort_by(@, &CreationDate) | [-1].ImageId" \
+    --region $REGION \
+    --output text)
+
+if [ "$AMI_ID" == "None" ] || [ -z "$AMI_ID" ]; then
+    echo "Unable to locate Ubuntu AMI."
+    exit 1
+fi
+
+echo "Using AMI: $AMI_ID"
 
 # =========================================================
 # Select Supported Availability Zone
