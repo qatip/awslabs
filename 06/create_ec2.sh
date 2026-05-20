@@ -362,6 +362,7 @@ apt-get install -y \
     curl \
     gnupg \
     unzip
+    git
 
 mkdir -p /etc/apt/keyrings
 
