@@ -1,260 +1,148 @@
 #!/bin/bash
 
-set -euo pipefail
+set -u
+export AWS_PAGER=""
 
-# =========================================================
-# Variables
-# =========================================================
+REGION="us-west-2"
 
-REGION="us-east-1"
 VPC_NAME="JenkinsVPC"
-SUBNET_NAME="JenkinsSubnet"
+SUBNET_NAME="Jenkins"
 SECURITY_GROUP_NAME="JenkinsSecurityGroup"
 ROUTE_TABLE_NAME="JenkinsRouteTable"
 IGW_NAME="JenkinsInternetGateway"
 KEY_NAME="Jenkins"
 INSTANCE_NAME="JenkinsServer"
 
-# =========================================================
-# Locate Resources
-# =========================================================
-
 echo ""
 echo "========================================================="
-echo "Locating AWS Resources..."
+echo "Robust Jenkins Lab Cleanup"
+echo "Region: $REGION"
 echo "========================================================="
 
-VPC_ID=$(aws ec2 describe-vpcs \
-    --region $REGION \
-    --filters "Name=tag:Name,Values=$VPC_NAME" \
-    --query "Vpcs[0].VpcId" \
-    --output text)
+run_safe() {
+  "$@" >/dev/null 2>&1 || true
+}
 
-SUBNET_ID=$(aws ec2 describe-subnets \
-    --region $REGION \
-    --filters "Name=tag:Name,Values=$SUBNET_NAME" \
-    --query "Subnets[0].SubnetId" \
-    --output text)
+echo ""
+echo "Finding EC2 instances..."
+INSTANCE_IDS=$(aws ec2 describe-instances \
+  --region "$REGION" \
+  --filters \
+    "Name=tag:Name,Values=$INSTANCE_NAME" \
+    "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+  --query "Reservations[].Instances[].InstanceId" \
+  --output text 2>/dev/null || true)
 
-SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
-    --region $REGION \
-    --filters "Name=group-name,Values=$SECURITY_GROUP_NAME" \
-    --query "SecurityGroups[0].GroupId" \
-    --output text)
-
-ROUTE_TABLE_ID=$(aws ec2 describe-route-tables \
-    --region $REGION \
-    --filters "Name=tag:Name,Values=$ROUTE_TABLE_NAME" \
-    --query "RouteTables[0].RouteTableId" \
-    --output text)
-
-IGW_ID=$(aws ec2 describe-internet-gateways \
-    --region $REGION \
-    --filters "Name=tag:Name,Values=$IGW_NAME" \
-    --query "InternetGateways[0].InternetGatewayId" \
-    --output text)
-
-INSTANCE_ID=$(aws ec2 describe-instances \
-    --region $REGION \
-    --filters \
-        "Name=tag:Name,Values=$INSTANCE_NAME" \
-        "Name=instance-state-name,Values=pending,running,stopping,stopped" \
-    --query "Reservations[0].Instances[0].InstanceId" \
-    --output text)
-
-# =========================================================
-# Display Located Resources
-# =========================================================
-
-echo "VPC ID:              ${VPC_ID:-Not Found}"
-echo "Subnet ID:           ${SUBNET_ID:-Not Found}"
-echo "Security Group ID:   ${SECURITY_GROUP_ID:-Not Found}"
-echo "Route Table ID:      ${ROUTE_TABLE_ID:-Not Found}"
-echo "Internet Gateway ID: ${IGW_ID:-Not Found}"
-echo "Instance ID:         ${INSTANCE_ID:-Not Found}"
-
-# =========================================================
-# Terminate EC2 Instance
-# =========================================================
-
-if [[ "$INSTANCE_ID" != "None" && -n "$INSTANCE_ID" ]]; then
-
-    echo ""
-    echo "========================================================="
-    echo "Terminating EC2 Instance..."
-    echo "========================================================="
-
-    aws ec2 terminate-instances \
-        --instance-ids $INSTANCE_ID \
-        --region $REGION >/dev/null
-
-    echo "Waiting for instance termination..."
-
-    aws ec2 wait instance-terminated \
-        --instance-ids $INSTANCE_ID \
-        --region $REGION
-
-    echo "EC2 Instance terminated."
-
+if [ -n "$INSTANCE_IDS" ] && [ "$INSTANCE_IDS" != "None" ]; then
+  echo "Terminating instances: $INSTANCE_IDS"
+  run_safe aws ec2 terminate-instances --region "$REGION" --instance-ids $INSTANCE_IDS
+  run_safe aws ec2 wait instance-terminated --region "$REGION" --instance-ids $INSTANCE_IDS
 else
-    echo "No EC2 instance found."
+  echo "No matching EC2 instances found."
 fi
 
-# =========================================================
-# Delete Security Group
-# =========================================================
+echo ""
+echo "Finding VPCs..."
+VPC_IDS=$(aws ec2 describe-vpcs \
+  --region "$REGION" \
+  --filters "Name=tag:Name,Values=$VPC_NAME" \
+  --query "Vpcs[].VpcId" \
+  --output text 2>/dev/null || true)
 
-if [[ "$SECURITY_GROUP_ID" != "None" && -n "$SECURITY_GROUP_ID" ]]; then
-
-    echo ""
-    echo "Deleting Security Group..."
-
-    aws ec2 delete-security-group \
-        --group-id $SECURITY_GROUP_ID \
-        --region $REGION
-
-    echo "Security Group deleted."
-
+if [ -z "$VPC_IDS" ] || [ "$VPC_IDS" = "None" ]; then
+  echo "No matching VPCs found."
 else
-    echo "No Security Group found."
+  for VPC_ID in $VPC_IDS; do
+    echo ""
+    echo "Cleaning VPC: $VPC_ID"
+
+    echo "Deleting security groups..."
+    SG_IDS=$(aws ec2 describe-security-groups \
+      --region "$REGION" \
+      --filters "Name=vpc-id,Values=$VPC_ID" "Name=group-name,Values=$SECURITY_GROUP_NAME" \
+      --query "SecurityGroups[].GroupId" \
+      --output text 2>/dev/null || true)
+
+    for SG_ID in $SG_IDS; do
+      [ "$SG_ID" = "None" ] && continue
+      echo "Deleting security group: $SG_ID"
+      run_safe aws ec2 delete-security-group --region "$REGION" --group-id "$SG_ID"
+    done
+
+    echo "Disassociating and deleting custom route tables..."
+    RT_IDS=$(aws ec2 describe-route-tables \
+      --region "$REGION" \
+      --filters "Name=vpc-id,Values=$VPC_ID" "Name=tag:Name,Values=$ROUTE_TABLE_NAME" \
+      --query "RouteTables[].RouteTableId" \
+      --output text 2>/dev/null || true)
+
+    for RT_ID in $RT_IDS; do
+      [ "$RT_ID" = "None" ] && continue
+
+      ASSOC_IDS=$(aws ec2 describe-route-tables \
+        --region "$REGION" \
+        --route-table-ids "$RT_ID" \
+        --query "RouteTables[].Associations[?Main==\`false\`].RouteTableAssociationId" \
+        --output text 2>/dev/null || true)
+
+      for ASSOC_ID in $ASSOC_IDS; do
+        [ "$ASSOC_ID" = "None" ] && continue
+        echo "Disassociating route table association: $ASSOC_ID"
+        run_safe aws ec2 disassociate-route-table --region "$REGION" --association-id "$ASSOC_ID"
+      done
+
+      echo "Deleting route table: $RT_ID"
+      run_safe aws ec2 delete-route-table --region "$REGION" --route-table-id "$RT_ID"
+    done
+
+    echo "Detaching and deleting internet gateways..."
+    IGW_IDS=$(aws ec2 describe-internet-gateways \
+      --region "$REGION" \
+      --filters "Name=attachment.vpc-id,Values=$VPC_ID" \
+      --query "InternetGateways[].InternetGatewayId" \
+      --output text 2>/dev/null || true)
+
+    for IGW_ID in $IGW_IDS; do
+      [ "$IGW_ID" = "None" ] && continue
+      echo "Detaching internet gateway: $IGW_ID"
+      run_safe aws ec2 detach-internet-gateway --region "$REGION" --internet-gateway-id "$IGW_ID" --vpc-id "$VPC_ID"
+      echo "Deleting internet gateway: $IGW_ID"
+      run_safe aws ec2 delete-internet-gateway --region "$REGION" --internet-gateway-id "$IGW_ID"
+    done
+
+    echo "Deleting subnets..."
+    SUBNET_IDS=$(aws ec2 describe-subnets \
+      --region "$REGION" \
+      --filters "Name=vpc-id,Values=$VPC_ID" \
+      --query "Subnets[].SubnetId" \
+      --output text 2>/dev/null || true)
+
+    for SUBNET_ID in $SUBNET_IDS; do
+      [ "$SUBNET_ID" = "None" ] && continue
+      echo "Deleting subnet: $SUBNET_ID"
+      run_safe aws ec2 delete-subnet --region "$REGION" --subnet-id "$SUBNET_ID"
+    done
+
+    echo "Deleting VPC: $VPC_ID"
+    run_safe aws ec2 delete-vpc --region "$REGION" --vpc-id "$VPC_ID"
+  done
 fi
 
-# =========================================================
-# Delete Route Table
-# =========================================================
-
-if [[ "$ROUTE_TABLE_ID" != "None" && -n "$ROUTE_TABLE_ID" ]]; then
-
-    echo ""
-    echo "Deleting Route Table..."
-
-    ASSOCIATION_ID=$(aws ec2 describe-route-tables \
-        --route-table-ids $ROUTE_TABLE_ID \
-        --region $REGION \
-        --query "RouteTables[0].Associations[?Main==\`false\`].RouteTableAssociationId" \
-        --output text)
-
-    if [[ "$ASSOCIATION_ID" != "None" && -n "$ASSOCIATION_ID" ]]; then
-
-        aws ec2 disassociate-route-table \
-            --association-id $ASSOCIATION_ID \
-            --region $REGION
-
-    fi
-
-    aws ec2 delete-route-table \
-        --route-table-id $ROUTE_TABLE_ID \
-        --region $REGION
-
-    echo "Route Table deleted."
-
+echo ""
+echo "Deleting AWS key pair if present..."
+if aws ec2 describe-key-pairs --region "$REGION" --key-names "$KEY_NAME" >/dev/null 2>&1; then
+  run_safe aws ec2 delete-key-pair --region "$REGION" --key-name "$KEY_NAME"
+  echo "AWS key pair deleted."
 else
-    echo "No Route Table found."
+  echo "No AWS key pair found."
 fi
 
-# =========================================================
-# Detach and Delete Internet Gateway
-# =========================================================
-
-if [[ "$IGW_ID" != "None" && -n "$IGW_ID" ]]; then
-
-    echo ""
-    echo "Detaching Internet Gateway..."
-
-    aws ec2 detach-internet-gateway \
-        --internet-gateway-id $IGW_ID \
-        --vpc-id $VPC_ID \
-        --region $REGION
-
-    echo "Deleting Internet Gateway..."
-
-    aws ec2 delete-internet-gateway \
-        --internet-gateway-id $IGW_ID \
-        --region $REGION
-
-    echo "Internet Gateway deleted."
-
-else
-    echo "No Internet Gateway found."
-fi
-
-# =========================================================
-# Delete Subnet
-# =========================================================
-
-if [[ "$SUBNET_ID" != "None" && -n "$SUBNET_ID" ]]; then
-
-    echo ""
-    echo "Deleting Subnet..."
-
-    aws ec2 delete-subnet \
-        --subnet-id $SUBNET_ID \
-        --region $REGION
-
-    echo "Subnet deleted."
-
-else
-    echo "No Subnet found."
-fi
-
-# =========================================================
-# Delete VPC
-# =========================================================
-
-if [[ "$VPC_ID" != "None" && -n "$VPC_ID" ]]; then
-
-    echo ""
-    echo "Deleting VPC..."
-
-    aws ec2 delete-vpc \
-        --vpc-id $VPC_ID \
-        --region $REGION
-
-    echo "VPC deleted."
-
-else
-    echo "No VPC found."
-fi
-
-# =========================================================
-# Delete Key Pair
-# =========================================================
-
-if aws ec2 describe-key-pairs \
-    --key-names "$KEY_NAME" \
-    --region $REGION >/dev/null 2>&1; then
-
-    echo ""
-    echo "Deleting AWS Key Pair..."
-
-    aws ec2 delete-key-pair \
-        --key-name $KEY_NAME \
-        --region $REGION
-
-    echo "AWS Key Pair deleted."
-
-else
-    echo "No AWS Key Pair found."
-fi
-
-# =========================================================
-# Delete Local PEM File
-# =========================================================
-
-if [ -f "${KEY_NAME}.pem" ]; then
-
-    echo ""
-    echo "Deleting local PEM file..."
-
-    rm -f "${KEY_NAME}.pem"
-
-    echo "Local PEM file deleted."
-
-else
-    echo "No local PEM file found."
-fi
-
-
+echo ""
+echo "Deleting local PEM files if present..."
+rm -f "${KEY_NAME}.pem"
+rm -f "./${KEY_NAME}.pem"
+rm -f "$HOME/${KEY_NAME}.pem"
+rm -f "$HOME/environment/${KEY_NAME}.pem"
 
 echo ""
 echo "========================================================="
