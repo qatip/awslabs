@@ -9,7 +9,7 @@ terraform {
 
 provider "aws" {
   region = "us-west-2"
-    ignore_tags { 
+  ignore_tags {
     key_prefixes = ["ca-"]
   }
 }
@@ -38,7 +38,7 @@ resource "aws_subnet" "private_subnet" {
   tags = {
     Name = "Private-Subnet"
   }
-} 
+}
 
 
 resource "aws_internet_gateway" "lab_igw" {
@@ -64,5 +64,5 @@ resource "aws_nat_gateway" "lab_nat_gw" {
     Name = "Lab-NAT-GW"
   }
 
-  depends_on = [aws_internet_gateway.lab_igw, aws_eip.static_ip]
+  depends_on = [aws_internet_gateway.lab_igw]
 }

@@ -9,7 +9,7 @@ terraform {
 
 provider "aws" {
   region = "us-west-2"
-    ignore_tags { 
+  ignore_tags {
     key_prefixes = ["ca-"]
   }
 }
@@ -38,5 +38,5 @@ resource "aws_subnet" "private_subnet" {
   tags = {
     Name = "Private-Subnet"
   }
-} 
+}
 

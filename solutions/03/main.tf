@@ -9,7 +9,7 @@ terraform {
 
 provider "aws" {
   region = "us-west-2"
-    ignore_tags { 
+  ignore_tags {
     key_prefixes = ["ca-"]
   }
 }
@@ -38,7 +38,7 @@ resource "aws_subnet" "private_subnet" {
   tags = {
     Name = "Private-Subnet"
   }
-} 
+}
 
 
 resource "aws_internet_gateway" "lab_igw" {
@@ -64,7 +64,7 @@ resource "aws_nat_gateway" "lab_nat_gw" {
     Name = "Lab-NAT-GW"
   }
 
-  depends_on = [aws_internet_gateway.lab_igw, aws_eip.static_ip]
+  depends_on = [aws_internet_gateway.lab_igw]
 }
 
 resource "aws_route_table" "public_route_table" {
@@ -77,32 +77,32 @@ resource "aws_route_table" "public_route_table" {
   tags = {
     Name = "Public-Route-Table"
   }
-  depends_on = [aws_internet_gateway.lab_igw]
+
 }
 
 resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.test_vpc.id
 
   route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.lab_nat_gw.id
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.lab_nat_gw.id
   }
   tags = {
     Name = "Private-Route-Table"
   }
-  depends_on = [aws_nat_gateway.lab_nat_gw]
+
 }
 
 resource "aws_route_table_association" "pub_to_ig" {
   subnet_id      = aws_subnet.public_subnet.id
   route_table_id = aws_route_table.public_route_table.id
-  depends_on     = [aws_internet_gateway.lab_igw]
+
 }
 
 resource "aws_route_table_association" "priv_to_nat" {
   subnet_id      = aws_subnet.private_subnet.id
   route_table_id = aws_route_table.private_route_table.id
-  depends_on     = [aws_nat_gateway.lab_nat_gw]
+
 }
 
 resource "aws_security_group" "internal_sg" {
@@ -125,7 +125,7 @@ resource "aws_security_group" "internal_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   tags = {
-    Name = "Internal SG"
+    Name = "Internal-SG"
   }
 }
 
@@ -163,32 +163,48 @@ resource "aws_security_group" "external_sg" {
 }
 
 resource "aws_instance" "private_vm" {
-  ami                         = "ami-06e85d4c3149db26a"
-  instance_type               = "t3.micro"
-  key_name                    = "Oregon_lab_keypair"
-  availability_zone           = "us-west-2a"
+  ami           = "ami-REPLACE_WITH_APPROVED_US_WEST_2_AMI"
+  instance_type = "t3.micro"
+  key_name      = "Oregon_lab_keypair"
+
   subnet_id                   = aws_subnet.private_subnet.id
   associate_public_ip_address = false
-  vpc_security_group_ids      = ["${aws_security_group.internal_sg.id}"]
+  vpc_security_group_ids      = [aws_security_group.internal_sg.id]
+
+  credit_specification {
+    cpu_credits = "standard"
+  }
 
   tags = {
-    Name = "Private-VM"
+    Name = "PrivVM"
   }
-  depends_on = [aws_subnet.private_subnet, aws_security_group.internal_sg]
+
 }
 
 resource "aws_instance" "public_vm" {
-  ami                         = "ami-06e85d4c3149db26a"
-  instance_type               = "t3.micro"
-  key_name                    = "Oregon_lab_keypair"
-  availability_zone           = "us-west-2a"
+  ami           = "ami-REPLACE_WITH_APPROVED_US_WEST_2_AMI"
+  instance_type = "t3.micro"
+  key_name      = "Oregon_lab_keypair"
+
   subnet_id                   = aws_subnet.public_subnet.id
   associate_public_ip_address = true
-  vpc_security_group_ids      = ["${aws_security_group.external_sg.id}"]
+  vpc_security_group_ids      = [aws_security_group.external_sg.id]
+
+  credit_specification {
+    cpu_credits = "standard"
+  }
 
   tags = {
-    Name = "Public-VM"
+    Name = "PubVM"
   }
-  depends_on = [aws_subnet.public_subnet, aws_security_group.external_sg]
+
 }
 
+
+output "pub_vm_public_ip" {
+  value = aws_instance.public_vm.public_ip
+}
+
+output "priv_vm_private_ip" {
+  value = aws_instance.private_vm.private_ip
+}
