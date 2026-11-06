@@ -1,0 +1,6 @@
+.local/
+.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
+*.pem

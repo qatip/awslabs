@@ -1,0 +1,90 @@
+// Runs on the Ubuntu Jenkins server, not on the Windows workstation.
+pipeline {
+    agent any
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+    parameters {
+        booleanParam(name: 'USE_SESSION_TOKEN', defaultValue: false, description: 'Enable for temporary AWS credentials stored as aws_session_token')
+    }
+    environment {
+        TF_IN_AUTOMATION = 'true'
+        AWS_DEFAULT_REGION = 'us-west-2'
+        AWS_REGION = 'us-west-2'
+        AWS_SESSION_TOKEN = ''
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                deleteDir()
+                checkout scm
+            }
+        }
+        stage('Check Terraform') {
+            steps { sh 'terraform version' }
+        }
+        stage('Init') {
+            steps {
+                script {
+                    def bindings = [usernamePassword(credentialsId: 'aws_user', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]
+                    if (params.USE_SESSION_TOKEN) {
+                        bindings.add(string(credentialsId: 'aws_session_token', variable: 'AWS_SESSION_TOKEN'))
+                    }
+                    withCredentials(bindings) {
+                        sh 'terraform init -input=false'
+                    }
+                }
+            }
+        }
+        stage('Validate') {
+            steps {
+                script {
+                    def bindings = [usernamePassword(credentialsId: 'aws_user', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]
+                    if (params.USE_SESSION_TOKEN) {
+                        bindings.add(string(credentialsId: 'aws_session_token', variable: 'AWS_SESSION_TOKEN'))
+                    }
+                    withCredentials(bindings) {
+                        sh 'terraform validate'
+                    }
+                }
+            }
+        }
+        stage('Destroy plan') {
+            steps {
+                script {
+                    def bindings = [usernamePassword(credentialsId: 'aws_user', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]
+                    if (params.USE_SESSION_TOKEN) {
+                        bindings.add(string(credentialsId: 'aws_session_token', variable: 'AWS_SESSION_TOKEN'))
+                    }
+                    withCredentials(bindings) {
+                        sh 'terraform plan -destroy -input=false -lock-timeout=5m -out=tfplan'
+                    }
+                }
+            }
+        }
+        stage('Approve destruction') {
+            steps {
+                input message: 'Review the destroy plan. Delete the Terraform managed test bucket?', ok: 'Yes, destroy'
+            }
+        }
+        stage('Apply destruction') {
+            steps {
+                script {
+                    def bindings = [usernamePassword(credentialsId: 'aws_user', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]
+                    if (params.USE_SESSION_TOKEN) {
+                        bindings.add(string(credentialsId: 'aws_session_token', variable: 'AWS_SESSION_TOKEN'))
+                    }
+                    withCredentials(bindings) {
+                        sh 'terraform apply -input=false -lock-timeout=5m -auto-approve tfplan'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always { deleteDir() }
+    }
+}
