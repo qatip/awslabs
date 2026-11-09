@@ -1,14 +1,14 @@
 terraform {
   required_providers {
     docker = {
-      source = "kreuzwerker/docker"
-      version = "3.0.1"
+      source  = "kreuzwerker/docker"
+      version = "4.2.0"
     }
   }
 }
 
 provider "docker" {
-  host = "unix:///var/run/docker.sock"
+  host = "tcp://localhost:2375"
 }
 
 # Pulls the image
