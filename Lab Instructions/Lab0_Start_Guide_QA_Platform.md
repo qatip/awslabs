@@ -1,8 +1,9 @@
 # Terraform in Practice AWS Lab 0
 
-## Lab Setup - VSC
+## Lab Setup
 
-Version 2.0.0 · 06/11/26 · mcgreen@qa.com
+Last reviewed and tested - 24/11/26 18:22 - mcgreen@qa.com
+
 
 ## Contents
 
@@ -11,7 +12,7 @@ Version 2.0.0 · 06/11/26 · mcgreen@qa.com
 - [Before you begin](#before-you-begin)
 - [Task1 Set up your Lab environment](#task1-set-up-your-lab-environment)
 - [Task 2 Logging into AWS](#task-2-logging-into-aws)
-- [Task 3 Arranging your remote desktop](#task-3-arranging-your-remote-desktop)
+- [Task 3 Lab Instructions](#task-3-lab-instructions)
 - [Copyright](#copyright)
 
 ## Lab Objectives
@@ -24,7 +25,7 @@ In this lab, you will:
 
 ## Teaching Points
 
-This lab will configure your lab environment. The environment has a time limit of 8 hours after which it will be decommissioned. If the lab expires, ends or is restarted, you must repeat this lab before continuing.
+This lab will configure your lab environment. The environment has a time limit of 48 hours after which it will be decommissioned. If the lab expires, ends or is restarted, you must repeat this lab before continuing.
 
 ## Before you begin
 
@@ -36,7 +37,7 @@ Two lab booking should have been made for you, one for AWS based labs and anothe
 
 Select Hands on lab ‘QA Terraform in Practice  - AWS.. Click Start lab
 
-A remote desktop will be provisioned for you.
+A remote desktop will be provisioned for you. Wait until it is fully initialized.
 
 ## Task1 Set up your Lab environment
 
@@ -88,21 +89,19 @@ Note: This can be done from your local machine or on the remote desktop. The lat
 
 7. When required to run Terraform commands from VSC terminal, you will need to authenticate to AWS.
 
-8. Type “aws configure” in a VSC terminal session (Terminal, New Terminal).
+8. Type `aws configure` in a VSC terminal session (Terminal, New Terminal).
 
-9. Use the AWS Access KEY ID and AWS Secret Access Key provided…
+9. Use the `AWS Access KEY ID` and `AWS Secret Access Key` provided at Step 3 of Section 2 in the sidebar.
 
-10. Use “us-west-2” as your default region for this lab environment. If running these labs post-course then choose an appropriate region.
+10. Use `us-west-2` as your default region for this lab environment. If running these labs post-course then choose an appropriate region.
 
 11. Leave Default output format blank.
 
-12. These credentials are stored in users/{username}/.aws. You can re-run aws configure at any point to change these setting..
+12. These credentials are stored in `users\{username}\.aws` You can re-run aws configure at any point to change these settings.
 
-## Task 3 Arranging your remote desktop
+## Task 3 Lab Instructions
 
-13. In order to avoid the frustration of desktop clutter, it is suggested you arrange your desktop as shown below. In this way you can easily switch between your web browser, in which you can view your course manual, lab instructions, the AWS Console and any other web resources, and the VSC interface, in which you will create, and action terraform files.
-
-You can view the lab instructions within VSC or through a browser, browsing to  c:\awslabs\Lab Instructions.
+13. Lab instructions are provided as MD files in `awslabs\Lab Instructions` Right-click the appropriate file and select `Open Preview`
 
 **Congratulations, you have completed this lab**
 
