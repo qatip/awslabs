@@ -1,4 +1,4 @@
-# QATIPv3 AWS Lab 2
+# QATIP AWS Lab 2
 
 ## Create an EC2 instance with Terraform
 
