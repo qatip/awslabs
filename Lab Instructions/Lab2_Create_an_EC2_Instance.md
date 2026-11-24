@@ -2,6 +2,9 @@
 
 ## Create an EC2 instance with Terraform
 
+Last reviewed and tested - 24/11/26 19:05 - mcgreen@qa.com
+
+
 ## Contents
 
 - [Lab Objectives](#lab-objectives)
@@ -46,15 +49,15 @@ cd c:\awslabs\02
 
 3. This shifts your current working directory to awslabs/labs/02. Ensure all commands are executed in this directory
 
-4. Close any open files and use the Explorer pane to navigate to and open the empty main.tf file in awslabs/02.
+4. Close any open files, except this one, and use the Explorer pane to navigate to and open the empty `main.tf` file in `awslabs/02`. (Tip. Right-click and choose "Open to the side" so you can continue to see these instructions)
 
 ## Task 1: Create a configuration file to deploy an EC2 instance.
 
 1. Review Terraform AWS Provider documentation: https://registry.terraform.io/providers/hashicorp/aws/4.53.0
 
-2. Click `Use Provider`
+2. Scroll down to the `How to use this provider` section and Click the copy icon.
 
-3. Copy the code block into the empty main.tf file in the labs/02 folder. For convenience, the code is listed below:
+3. Paste the code block into the empty main.tf file in the labs/02 folder. For convenience, the code is listed below:
 
 ```hcl
 terraform {
@@ -71,7 +74,7 @@ provider "aws" {
 }
 ```
 
-4. From within the 'Example Usage' section of the documentation, find the sections relating to ‘Configure the AWS Provider'. We see that information regarding the AWS region is needed, us-east-1 being used in the sample code.
+4. From within the 'Example Usage' section of the `Documentation`, find the sections relating to `Configure the AWS Provider`. We see that information regarding the AWS region is needed, us-east-1 being used in the sample code.
 
 5. We will be creating our EC2 instance in us-west-2. Modify your code to include the us-west-2 region. For convenience, the completed code for configuring the AWS provider is listed below:
 
@@ -97,7 +100,7 @@ Note: This block is not required if you were to run this lab using your own AWS 
 
 8. Paste this code at the end of main.tf
 
-9. Examine the code you have just added. There are two workflow blocks, data “aws_ami” “ubuntu “ {} and resource “aws_instance” “web” {}. The first block obtains the latest ami for the image specified, in this case ubuntu. The second block creates an EC2 instance using this ami, as referenced by the line “ami = data.aws_ami.ubuntu.id”
+9. Examine the code you have just added. There are two workflow blocks, `data “aws_ami” “ubuntu “ {}` and `resource “aws_instance” “web” {}` The first block obtains the latest ami for the image specified, in this case ubuntu. The second block creates an EC2 instance using this ami, as referenced by the line `ami = data.aws_ami.ubuntu.id`
 
 ## Task 2: Run Terraform & Test
 
@@ -107,9 +110,9 @@ Note: This block is not required if you were to run this lab using your own AWS 
 
 3. Run `terraform plan` -- review what will be created
 
-4. Run `terraform apply` typing `yes` when prompted. Review output in the CLI. Notice that a persistent terraform.tfstate file now exists in the root directory.
+4. Run `terraform apply` typing `yes` when prompted. Review output in the CLI. Notice that a persistent `terraform.tfstate` file now exists in the root directory.
 
-5. Take note of the id of the newly created aws_instance.web resource.
+5. Take note of the `id` of the newly created aws_instance.web resource.
 
 6. Switch to the Console and search for EC2 instances in the Oregon (us-west-2) region. Your newly created instance should be present along with the instance running your IDE. Note the Instance type as being t3.micro
 
@@ -131,7 +134,7 @@ filter {
 }
 ```
 
-12. Save your changes and then run `terraform plan` Review the output and note that this is a replacement. A new instance must be created using the new amazon machine image that has ubuntu-jammy pre-installed.
+12. Save your changes and then run `terraform plan` Review the output and note that this is a replacement. A new instance must be created using the new amazon machine image that has `ubuntu-jammy` pre-installed.
 
 13. Run `terraform apply` typing `yes` when prompted.
 

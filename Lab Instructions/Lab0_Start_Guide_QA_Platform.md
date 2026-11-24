@@ -55,6 +55,7 @@ Enter the following commands:
 
 ```powershell
 cd c:\awslabs
+git config --global --add safe.directory C:/awslabs
 git pull
 ```
 
