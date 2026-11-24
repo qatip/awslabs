@@ -2,6 +2,8 @@
 
 ## A sample Terraform deployment
 
+Last reviewed and tested - 24/11/26 18:50 - mcgreen@qa.com
+
 ## Contents
 
 - [Lab Objectives](#lab-objectives)
@@ -56,7 +58,7 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "3.6.2"
+      version = "4.2.0"
     }
   }
 }
@@ -90,7 +92,7 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "3.6.2"
+      version = "4.2.0"
     }
   }
 }
@@ -143,61 +145,22 @@ This is the second block of code that indicates the resources we want Terraform 
 cd c:\awslabs\01
 ```
 
-2. Run the terraform initialization command..
+2. Run the terraform initialization command.. `terraform init`
 
-```powershell
-terraform init
-```
+3. Now run the `terraform plan` command  and review what will be created.
 
-3. Now run the terraform plan command  and review what will be created..
+4. Finall, run `terraform apply` typing `yes` when prompted.
 
-```powershell
-terraform plan
-```
-
-```text
-# docker_image.httpd will be created
-+ resource "docker_image" "httpd" {
-    + id           = (known after apply)
-    + image_id     = (known after apply)
-    + name         = "httpd:latest"
-    + repo_digest  = (known after apply)
-  }
-
-Plan: 2 to add, 0 to change, 0 to destroy.
-```
-
-4. Run terraform apply typing yes when prompted.
-
-```text
-Plan: 2 to add, 0 to change, 0 to destroy.
-
-Do you want to perform these actions?
-  Terraform will perform the actions described above.
-  Only 'yes' will be accepted to approve.
-
-  Enter a value:
-```
 
 5. If prompted, Windows Defender should be configured to allow access
 
 6. Switch to Docker Desktop and verify the image download and container creation.
 
-7. Switch back to the IDE terminal and run docker images ..
-
-```text
-REPOSITORY   TAG      IMAGE ID       CREATED        SIZE
-httpd        latest   f81fca8b7f74   6 months ago   148MB
-```
+7. Switch back to the IDE terminal and run `docker images`
 
 This is the httpd image that Terraform instructed Docker to download
 
-7. Run docker ps to list running containers.
-
-```text
-CONTAINER ID   IMAGE          COMMAND              CREATED
-b8d1c2d79433   f81fca8b7f74   "httpd-foreground"   2 seconds ago
-```
+7. Run `docker ps` to list running containers.
 
 This is the container named ‘webserver’, that Terraform instructed Docker to start, using the downloaded image. Note the last few digits of the unique container ID for your running container (it will differ from the one shown here)
 
@@ -205,62 +168,33 @@ This is the container named ‘webserver’, that Terraform instructed Docker to
 
 9. View the “It Works" response from the Apache web server (index.html)
 
-```text
-It works!
-```
-
 10. We will now modify the deployment by changing the external port number from 88 to 8088. Some resource changes can be applied to the existing instance of a resource, whilst others require the destruction of the original resource and the creation of a replacement. Let us see whether a port change modifies or recreates this resource.
 
-11. Return to the main.tf file and change the external port on line 25 to 8088.
-
-```hcl
-ports {
-  internal = 80
-  external = 8080
-}
-```
+11. Return to the `main.tf` file and change the external port on line 25 from `88` to `8088`
 
 12. If you have not enabled Auto save, save the file changes using Ctrl+s
 
-13. Run terraform plan again and review the changes. The change of port will force the current container to be deleted and a new one created…
+13. Run `terraform plan` again and review the changes. The change of port will force the current container to be deleted and a new one created.
 
-```text
-~ ports {
-    ~ external = 88 -> 8088 # forces replacement
-      # (3 unchanged attributes hidden)
-  }
-
-Plan: 1 to add, 0 to change, 1 to destroy.
-```
-
-14. Run terraform apply, typing yes when prompted
+14. Run `terraform apply`, typing `yes` when prompted
 
 15. Browse to http://127.0.0.1:8088 This should return a success "It works" showing that the new container is listening on port 8088
 
-```text
-It works!
-```
-
-16. Run docker ps again
-
-```text
-CONTAINER ID   IMAGE          COMMAND              CREATED
-83efc18dafa6   f81fca8b7f74   "httpd-foreground"   9 seconds ago
-```
+16. Run `docker ps` again
 
 Note that your CONTAINER ID will have changed – Docker containers are immutable so Terraform destroyed the original container and deployed a replacement using the same image. This is an important point to be aware of as we progress through the course. Whether we ‘update’ or ‘replace’ a resource when making changes depends upon the resource itself and the changes we make.
 
 ## Task3 Examine the state file
 
-1. When ‘terraform apply’ is run for the first time, a persistent record of resources Terraform deploys and manages is created in the form of a state file, terraform.tfstate. This file is updated whenever you ask Terraform to create, change, or destroy resources thereafter. By default this file will be in your working directory. Click on it now to examine its contents..
+1. When ‘terraform apply’ is run for the first time, a persistent record of resources Terraform deploys and manages is created in the form of a state file, `terraform.tfstate`. This file is updated whenever you ask Terraform to create, change, or destroy resources thereafter. By default this file will be in your working directory. Click on it now to examine its contents..
 
 ## Task4 Destroy the deployment
 
-1. Run terraform destroy, review the output and type yes
+1. Run `terraform destroy`, review the output and type `yes`
 
-2. Run docker ps to confirm your container has been deleted
+2. Run `docker ps` to confirm your container has been deleted
 
-3. Run docker images and confirm your image has been deleted
+3. Run `docker images` and confirm your image has been deleted
 
 4. Revisit the state file and view its now reduced content
 
